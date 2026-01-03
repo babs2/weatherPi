@@ -86,7 +86,7 @@ class WeatherDisplay:
         
     def setup_ui(self):
         # Header with current weather
-        self.header = tk.Frame(self.main_frame, bg='#00000000')
+        self.header = tk.Frame(self.main_frame, bg='#000000')
         self.header.pack(fill=tk.X, pady=(0, 20))
         
         # City and time with shadow effect
@@ -94,7 +94,7 @@ class WeatherDisplay:
             self.header,
             text=self.CITY,
             font=('Arial', 32, 'bold'),
-            bg='#00000000',
+            bg='#000000',
             fg='#ffffff'
         )
         self.city_label.pack(anchor='w')
@@ -103,16 +103,16 @@ class WeatherDisplay:
             self.header,
             text='',
             font=('Arial', 14),
-            bg='#00000000',
+            bg='#000000',
             fg='#e0e0e0'
         )
         self.time_label.pack(anchor='w')
         
         # Current weather container with semi-transparent background
-        self.current_frame = tk.Frame(self.main_frame, bg='#1a1f3acc', highlightthickness=0)
+        self.current_frame = tk.Frame(self.main_frame, bg='#1a1f3a', highlightthickness=0)
         self.current_frame.pack(fill=tk.X, pady=(0, 20))
         
-        current_inner = tk.Frame(self.current_frame, bg='#00000000')
+        current_inner = tk.Frame(self.current_frame, bg='#1a1f3a')
         current_inner.pack(padx=30, pady=30)
         
         # Temperature
@@ -120,7 +120,7 @@ class WeatherDisplay:
             current_inner,
             text='--°',
             font=('Arial', 72, 'bold'),
-            bg='#00000000',
+            bg='#1a1f3a',
             fg='#64ffda'
         )
         self.temp_label.grid(row=0, column=0, rowspan=2, padx=(0, 40))
@@ -130,7 +130,7 @@ class WeatherDisplay:
             current_inner,
             text='Loading...',
             font=('Arial', 20),
-            bg='#00000000',
+            bg='#1a1f3a',
             fg='#ffffff'
         )
         self.desc_label.grid(row=0, column=1, sticky='sw', pady=(0, 5))
@@ -140,7 +140,7 @@ class WeatherDisplay:
             current_inner,
             text='',
             font=('Arial', 14),
-            bg='#00000000',
+            bg='#1a1f3a',
             fg='#e0e0e0'
         )
         self.info_label.grid(row=1, column=1, sticky='nw')
@@ -150,32 +150,32 @@ class WeatherDisplay:
             self.main_frame,
             text='7-Day Forecast',
             font=('Arial', 18, 'bold'),
-            bg='#00000000',
+            bg='#000000',
             fg='#ffffff'
         )
         forecast_label.pack(anchor='w', pady=(0, 10))
         
-        self.forecast_frame = tk.Frame(self.main_frame, bg='#00000000')
+        self.forecast_frame = tk.Frame(self.main_frame, bg='#000000')
         self.forecast_frame.pack(fill=tk.BOTH, expand=True)
         
         self.day_frames = []
         for i in range(7):
             day_container = tk.Frame(
                 self.forecast_frame,
-                bg='#1a1f3acc',
+                bg='#1a1f3a',
                 highlightthickness=0
             )
             day_container.grid(row=0, column=i, padx=5, sticky='nsew')
             self.forecast_frame.columnconfigure(i, weight=1)
             
-            day_inner = tk.Frame(day_container, bg='#00000000')
+            day_inner = tk.Frame(day_container, bg='#1a1f3a')
             day_inner.pack(expand=True, pady=15)
             
             day_name = tk.Label(
                 day_inner,
                 text='',
                 font=('Arial', 12, 'bold'),
-                bg='#00000000',
+                bg='#1a1f3a',
                 fg='#ffffff'
             )
             day_name.pack()
@@ -184,7 +184,7 @@ class WeatherDisplay:
                 day_inner,
                 text='',
                 font=('Arial', 24),
-                bg='#00000000',
+                bg='#1a1f3a',
                 fg='#64ffda'
             )
             icon_label.pack(pady=5)
@@ -193,7 +193,7 @@ class WeatherDisplay:
                 day_inner,
                 text='',
                 font=('Arial', 14, 'bold'),
-                bg='#00000000',
+                bg='#1a1f3a',
                 fg='#ffffff'
             )
             temp_high.pack()
@@ -202,7 +202,7 @@ class WeatherDisplay:
                 day_inner,
                 text='',
                 font=('Arial', 12),
-                bg='#00000000',
+                bg='#1a1f3a',
                 fg='#e0e0e0'
             )
             temp_low.pack()
@@ -219,9 +219,9 @@ class WeatherDisplay:
             self.main_frame,
             text='⟳ Refresh',
             font=('Arial', 12),
-            bg='#1a1f3acc',
+            bg='#1a1f3a',
             fg='#64ffda',
-            activebackground='#2a2f4acc',
+            activebackground='#2a2f4a',
             activeforeground='#64ffda',
             relief=tk.FLAT,
             padx=20,
