@@ -1,16 +1,17 @@
 #!/usr/bin/env python3
 """
 Modern 7-Day Weather Display for Raspberry Pi
-Designed for 1024x600 7" touchscreen
+Designed for 1024x600 7" touchscreen with custom background
 """
 
 import tkinter as tk
 from tkinter import ttk
 import requests
 from datetime import datetime, timedelta
-from PIL import Image, ImageTk, ImageDraw
+from PIL import Image, ImageTk, ImageDraw, ImageFilter, ImageEnhance
 import json
 import os
+from io import BytesIO
 
 class WeatherDisplay:
     def __init__(self, root):
@@ -21,31 +22,79 @@ class WeatherDisplay:
         self.API_KEY = os.environ.get('WEATHER_API_KEY', '')
         self.CITY = os.environ.get('WEATHER_CITY', 'London')
         self.UNITS = 'metric'  # or 'imperial'
+        self.BACKGROUND_URL = 'https://www.mylonglake.com/cams/snapshot6.jpg'
         
         # Setup fullscreen
         self.root.attributes('-fullscreen', True)
-        self.root.configure(bg='#0a0e27')
+        self.root.configure(bg='#000000')
         self.root.bind('<Escape>', lambda e: self.root.attributes('-fullscreen', False))
         self.root.bind('<F11>', lambda e: self.root.attributes('-fullscreen', True))
         
-        # Main container
-        self.main_frame = tk.Frame(root, bg='#0a0e27')
-        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        # Get screen dimensions
+        self.screen_width = self.root.winfo_screenwidth()
+        self.screen_height = self.root.winfo_screenheight()
+        
+        # Background label
+        self.bg_label = tk.Label(root, bg='#000000')
+        self.bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+        
+        # Main container with semi-transparent background
+        self.main_frame = tk.Frame(root, bg='#000000')
+        self.main_frame.place(relx=0.5, rely=0.5, anchor='center')
         
         self.setup_ui()
+        self.update_background()
         self.update_weather()
+        
+    def update_background(self):
+        """Fetch and display background image from URL"""
+        try:
+            response = requests.get(self.BACKGROUND_URL, timeout=10)
+            img = Image.open(BytesIO(response.content))
+            
+            # Resize to fit screen while maintaining aspect ratio
+            img_width, img_height = img.size
+            scale = max(self.screen_width / img_width, self.screen_height / img_height)
+            new_width = int(img_width * scale)
+            new_height = int(img_height * scale)
+            
+            img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+            
+            # Center crop to screen size
+            left = (new_width - self.screen_width) // 2
+            top = (new_height - self.screen_height) // 2
+            img = img.crop((left, top, left + self.screen_width, top + self.screen_height))
+            
+            # Apply slight blur and darken for better text readability
+            img = img.filter(ImageFilter.GaussianBlur(radius=2))
+            enhancer = ImageEnhance.Brightness(img)
+            img = enhancer.enhance(0.6)
+            
+            # Convert to PhotoImage and display
+            self.bg_photo = ImageTk.PhotoImage(img)
+            self.bg_label.config(image=self.bg_photo)
+            
+            print(f"Background updated at {datetime.now().strftime('%H:%M:%S')}")
+            
+        except Exception as e:
+            print(f'Error updating background: {e}')
+            # Use solid dark background as fallback
+            self.bg_label.config(bg='#0a0e27')
+        
+        # Schedule next background update (every 1 hour = 3600000 ms)
+        self.root.after(3600000, self.update_background)
         
     def setup_ui(self):
         # Header with current weather
-        self.header = tk.Frame(self.main_frame, bg='#0a0e27')
+        self.header = tk.Frame(self.main_frame, bg='#00000000')
         self.header.pack(fill=tk.X, pady=(0, 20))
         
-        # City and time
+        # City and time with shadow effect
         self.city_label = tk.Label(
             self.header,
             text=self.CITY,
             font=('Arial', 32, 'bold'),
-            bg='#0a0e27',
+            bg='#00000000',
             fg='#ffffff'
         )
         self.city_label.pack(anchor='w')
@@ -54,16 +103,16 @@ class WeatherDisplay:
             self.header,
             text='',
             font=('Arial', 14),
-            bg='#0a0e27',
-            fg='#8892b0'
+            bg='#00000000',
+            fg='#e0e0e0'
         )
         self.time_label.pack(anchor='w')
         
-        # Current weather container
-        self.current_frame = tk.Frame(self.main_frame, bg='#1a1f3a', highlightthickness=0)
+        # Current weather container with semi-transparent background
+        self.current_frame = tk.Frame(self.main_frame, bg='#1a1f3acc', highlightthickness=0)
         self.current_frame.pack(fill=tk.X, pady=(0, 20))
         
-        current_inner = tk.Frame(self.current_frame, bg='#1a1f3a')
+        current_inner = tk.Frame(self.current_frame, bg='#00000000')
         current_inner.pack(padx=30, pady=30)
         
         # Temperature
@@ -71,7 +120,7 @@ class WeatherDisplay:
             current_inner,
             text='--°',
             font=('Arial', 72, 'bold'),
-            bg='#1a1f3a',
+            bg='#00000000',
             fg='#64ffda'
         )
         self.temp_label.grid(row=0, column=0, rowspan=2, padx=(0, 40))
@@ -81,7 +130,7 @@ class WeatherDisplay:
             current_inner,
             text='Loading...',
             font=('Arial', 20),
-            bg='#1a1f3a',
+            bg='#00000000',
             fg='#ffffff'
         )
         self.desc_label.grid(row=0, column=1, sticky='sw', pady=(0, 5))
@@ -91,8 +140,8 @@ class WeatherDisplay:
             current_inner,
             text='',
             font=('Arial', 14),
-            bg='#1a1f3a',
-            fg='#8892b0'
+            bg='#00000000',
+            fg='#e0e0e0'
         )
         self.info_label.grid(row=1, column=1, sticky='nw')
         
@@ -101,32 +150,32 @@ class WeatherDisplay:
             self.main_frame,
             text='7-Day Forecast',
             font=('Arial', 18, 'bold'),
-            bg='#0a0e27',
+            bg='#00000000',
             fg='#ffffff'
         )
         forecast_label.pack(anchor='w', pady=(0, 10))
         
-        self.forecast_frame = tk.Frame(self.main_frame, bg='#0a0e27')
+        self.forecast_frame = tk.Frame(self.main_frame, bg='#00000000')
         self.forecast_frame.pack(fill=tk.BOTH, expand=True)
         
         self.day_frames = []
         for i in range(7):
             day_container = tk.Frame(
                 self.forecast_frame,
-                bg='#1a1f3a',
+                bg='#1a1f3acc',
                 highlightthickness=0
             )
             day_container.grid(row=0, column=i, padx=5, sticky='nsew')
             self.forecast_frame.columnconfigure(i, weight=1)
             
-            day_inner = tk.Frame(day_container, bg='#1a1f3a')
+            day_inner = tk.Frame(day_container, bg='#00000000')
             day_inner.pack(expand=True, pady=15)
             
             day_name = tk.Label(
                 day_inner,
                 text='',
                 font=('Arial', 12, 'bold'),
-                bg='#1a1f3a',
+                bg='#00000000',
                 fg='#ffffff'
             )
             day_name.pack()
@@ -135,7 +184,7 @@ class WeatherDisplay:
                 day_inner,
                 text='',
                 font=('Arial', 24),
-                bg='#1a1f3a',
+                bg='#00000000',
                 fg='#64ffda'
             )
             icon_label.pack(pady=5)
@@ -144,7 +193,7 @@ class WeatherDisplay:
                 day_inner,
                 text='',
                 font=('Arial', 14, 'bold'),
-                bg='#1a1f3a',
+                bg='#00000000',
                 fg='#ffffff'
             )
             temp_high.pack()
@@ -153,8 +202,8 @@ class WeatherDisplay:
                 day_inner,
                 text='',
                 font=('Arial', 12),
-                bg='#1a1f3a',
-                fg='#8892b0'
+                bg='#00000000',
+                fg='#e0e0e0'
             )
             temp_low.pack()
             
@@ -170,17 +219,22 @@ class WeatherDisplay:
             self.main_frame,
             text='⟳ Refresh',
             font=('Arial', 12),
-            bg='#1a1f3a',
+            bg='#1a1f3acc',
             fg='#64ffda',
-            activebackground='#2a2f4a',
+            activebackground='#2a2f4acc',
             activeforeground='#64ffda',
             relief=tk.FLAT,
             padx=20,
             pady=10,
             cursor='hand2',
-            command=self.update_weather
+            command=self.manual_refresh
         )
         self.refresh_btn.pack(pady=(20, 0))
+        
+    def manual_refresh(self):
+        """Manually refresh both weather and background"""
+        self.update_weather()
+        self.update_background()
         
     def get_weather_icon(self, code):
         """Convert weather code to emoji"""
@@ -272,8 +326,8 @@ class WeatherDisplay:
             self.desc_label.config(text='Update Failed')
             self.info_label.config(text=str(e))
         
-        # Schedule next update (every 10 minutes)
-        self.root.after(600000, self.update_weather)
+        # Schedule next update (every 1 hour)
+        self.root.after(3600000, self.update_weather)
 
 if __name__ == '__main__':
     root = tk.Tk()
